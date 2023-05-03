@@ -7,12 +7,15 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.GridLayoutManager
 import kotlinx.coroutines.launch
 import ru.mmcs.disneywiki.R
 import ru.mmcs.disneywiki.databinding.FragmentListBinding
+import ru.mmcs.disneywiki.repositories.CharacterRepository
 import ru.mmcs.disneywiki.viemodels.CharacterListViewModel
 
 class CharacterListFragment : Fragment() {
@@ -28,8 +31,20 @@ class CharacterListFragment : Fragment() {
     ): View {
         _binding = FragmentListBinding.inflate(inflater, container, false)
         _binding?.lifecycleOwner = this
-        viewModel = CharacterListViewModel(_binding)
+        viewModel = ViewModelProvider(this, CharacterListViewModel.Factory(CharacterRepository())).get(CharacterListViewModel::class.java)
         _binding?.viewModel = viewModel
+
+        _binding?.btnBack?.setOnClickListener {
+            viewModel.onBtnPrevClick()
+        }
+        _binding?.btnNext?.setOnClickListener {
+            viewModel.onBtnNextClick()
+        }
+        _binding?.rvCharacters?.apply {
+            adapter = viewModel.characterListRvAdapter
+            layoutManager = GridLayoutManager(context,2, GridLayoutManager.VERTICAL,false)
+        }
+
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { uiState ->

@@ -2,9 +2,7 @@ package ru.mmcs.disneywiki.viemodels
 
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.RecyclerView.Orientation
-import com.squareup.picasso.Picasso
+import androidx.lifecycle.ViewModelProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -13,8 +11,7 @@ import ru.mmcs.disneywiki.databinding.FragmentListBinding
 import ru.mmcs.disneywiki.entities.DisneyCharacter
 import ru.mmcs.disneywiki.repositories.CharacterRepository
 
-class CharacterListViewModel(_binding: FragmentListBinding?) : ViewModel() {
-    private val repository = CharacterRepository(this)
+class CharacterListViewModel(private val repository: CharacterRepository) : ViewModel() {
 
     val totalPages = MutableLiveData(1)
     val currentpage = MutableLiveData(1)
@@ -24,7 +21,7 @@ class CharacterListViewModel(_binding: FragmentListBinding?) : ViewModel() {
     private val _uiState = MutableStateFlow(UiState())
     val uiState: StateFlow<UiState> = _uiState
 
-    private val rvAdapter: CharacterListRvAdapter = CharacterListRvAdapter(characterList,
+    public val characterListRvAdapter: CharacterListRvAdapter = CharacterListRvAdapter(characterList,
         object: CharacterListRvAdapter.OnItemInteractionListener{
             override fun onItemClicked(item: DisneyCharacter?) {
                 _uiState.update { currentUiState ->
@@ -34,21 +31,17 @@ class CharacterListViewModel(_binding: FragmentListBinding?) : ViewModel() {
         })
 
     init{
-        _binding?.btnBack?.setOnClickListener {
-            onBtnPrevClick()
-        }
-        _binding?.btnNext?.setOnClickListener {
-            onBtnNextClick()
-        }
-        _binding?.rvCharacters?.apply {
-            adapter = rvAdapter
-            layoutManager = GridLayoutManager(context,2,GridLayoutManager.VERTICAL,false)
-        }
+        repository.attach(this)
         isLoadingInProgress.value = true
         repository.getCharacters()
     }
 
-    private fun onBtnPrevClick(){
+    override fun onCleared() {
+        super.onCleared()
+        repository.detach()
+    }
+
+    public fun onBtnPrevClick(){
         if(currentpage.value ==  1){
             return
         }
@@ -57,7 +50,7 @@ class CharacterListViewModel(_binding: FragmentListBinding?) : ViewModel() {
         repository.getCharacters(currentpage.value!!)
     }
 
-    private fun onBtnNextClick(){
+    public fun onBtnNextClick(){
         if(currentpage.value == totalPages.value!! - 1){
             return
         }
@@ -70,7 +63,7 @@ class CharacterListViewModel(_binding: FragmentListBinding?) : ViewModel() {
         totalPages.value = totalItemsCount ?: 0
         characterList.value = items
         isLoadingInProgress.value = false
-        rvAdapter.notifyItemRangeChanged(0,characterList.value?.size ?: 0)
+        characterListRvAdapter.notifyItemRangeChanged(0,characterList.value?.size ?: 0)
     }
 
     fun onFetchFailed(reason: String){
@@ -94,4 +87,10 @@ class CharacterListViewModel(_binding: FragmentListBinding?) : ViewModel() {
 
     data class UiState(val errorMessage: String? = null,
                        val navigationTargetId: Int? = null)
+
+    class Factory(private val repo : CharacterRepository) : ViewModelProvider.Factory {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            return CharacterListViewModel(repo) as T
+        }
+    }
 }
