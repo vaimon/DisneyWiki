@@ -5,36 +5,43 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.squareup.picasso.Picasso
 import ru.mmcs.disneywiki.R
 import ru.mmcs.disneywiki.databinding.FragmentInfoBinding
+import ru.mmcs.disneywiki.entities.DisneyCharacter
+import ru.mmcs.disneywiki.repositories.CharacterRepository
+import ru.mmcs.disneywiki.viemodels.CharacterActViewmodel
+import ru.mmcs.disneywiki.viemodels.CharacterListViewModel
 
-/**
- * A simple [Fragment] subclass as the second destination in the navigation.
- */
 class CharacterInfoFragment : Fragment() {
 
     private var _binding: FragmentInfoBinding? = null
-
-    // This property is only valid between onCreateView and
-    // onDestroyView.
-    private val binding get() = _binding!!
+    private lateinit var viewModel: CharacterActViewmodel
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
+        viewModel = ViewModelProvider(this,
+            CharacterActViewmodel.Factory(arguments?.getParcelable("character")!!)
+        ).get(CharacterActViewmodel::class.java)
 
         _binding = FragmentInfoBinding.inflate(inflater, container, false)
-        return binding.root
-
+        setupBindingUi()
+        return _binding!!.root
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
-        binding.buttonSecond.setOnClickListener {
-            findNavController().navigate(R.id.action_SecondFragment_to_FirstFragment)
+    fun setupBindingUi(){
+        _binding?.viewModel = viewModel
+        Picasso.get().setIndicatorsEnabled(true)
+        Picasso.get().load(viewModel.character.imageUrl).into(_binding?.ivPhoto)
+        _binding?.tvName!!.text = viewModel.character.name
+        _binding?.rvActs?.apply {
+            layoutManager = LinearLayoutManager(context)
+            adapter = viewModel.characterActRvAdapter
         }
     }
 

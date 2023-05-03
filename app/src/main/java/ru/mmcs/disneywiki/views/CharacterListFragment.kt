@@ -48,9 +48,9 @@ class CharacterListFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect { uiState ->
-                    if(uiState.navigationTargetId != null){
+                    if(uiState.navigationTarget != null){
                         val args = Bundle()
-                        args.putInt("character_id", uiState.navigationTargetId)
+                        args.putParcelable("character", uiState.navigationTarget)
                         findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment, args)
                         viewModel.onDetailsFragmentOpened()
                     }

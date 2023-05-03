@@ -25,7 +25,7 @@ class CharacterListViewModel(private val repository: CharacterRepository) : View
         object: CharacterListRvAdapter.OnItemInteractionListener{
             override fun onItemClicked(item: DisneyCharacter?) {
                 _uiState.update { currentUiState ->
-                    currentUiState.copy(navigationTargetId = item?._id)
+                    currentUiState.copy(navigationTarget = item)
                 }
             }
         })
@@ -75,7 +75,7 @@ class CharacterListViewModel(private val repository: CharacterRepository) : View
 
     fun onDetailsFragmentOpened(){
         _uiState.update { currentUiState ->
-            currentUiState.copy(navigationTargetId = null)
+            currentUiState.copy(navigationTarget = null)
         }
     }
 
@@ -86,7 +86,7 @@ class CharacterListViewModel(private val repository: CharacterRepository) : View
     }
 
     data class UiState(val errorMessage: String? = null,
-                       val navigationTargetId: Int? = null)
+                       val navigationTarget: DisneyCharacter? = null)
 
     class Factory(private val repo : CharacterRepository) : ViewModelProvider.Factory {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
